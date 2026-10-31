@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>家計簿アプリ マニュアル</title>
+<style>
+body{font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;max-width:760px;margin:0 auto;padding:16px;line-height:1.7;color:#1e2430}
+h1{background:rgb(14,32,62);color:#fff;padding:12px 14px;border-radius:10px;font-size:22px}
+h2{border-bottom:2px solid #dde4ee;padding-bottom:4px;margin-top:28px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid #dde4ee;padding:6px 8px;text-align:left}
+th{background:#eef2f8}
+code{background:#eef2f8;padding:1px 5px;border-radius:4px}
+pre{background:#0e203e;color:#e6ecf7;padding:10px 12px;border-radius:8px;overflow-x:auto}
+li{margin:4px 0}
+a{color:#2f6fed}
+</style></head><body>
+<h1>家計簿アプリ 使い方マニュアル</h1>
+<p>この家計簿アプリは2つの使い方があります。</p>
+<table><thead><tr><th></th><th>PC版</th><th>iPhone単独版(PWA)</th></tr></thead><tbody><tr><td>場所</td><td><code>http://127.0.0.1:8765</code>（PC内）&lt;br&gt;<code>http://192.168.3.7:8765</code>（同一Wi-Fiのスマホ）</td><td>https://k333hama.github.io/kakeibo/</td></tr><tr><td>PCの起動が必要</td><td>必要（サーバー起動中のみ）</td><td>不要（オフラインでも動く）</td></tr><tr><td>データの保存先</td><td>PC内のDBファイル <code>D:\kakeibo_app\kakeibo.db</code></td><td>iPhone本体</td></tr><tr><td>使い方</td><td>下の「共通の使い方」</td><td>下の「iPhone単独版」+「共通の使い方」</td></tr></tbody></table>
+<hr>
+<h2>1. PC版の起動</h2>
+<li>タスクバーの検索で「cmd」と入力 → コマンドプロンプトを開く</li>
+<li>次を入力してEnter:</li>
+<p>   <code>`</code></p>
+<p>   cd /d D:\kakeibo_app</p>
+<p>   python server.py</p>
+<p>   <code>`</code></p>
+<li>ブラウザで <b>http://127.0.0.1:8765</b> を開く</li>
+<li>終了したいときはサーバーの窓で Ctrl+C（または窓を閉じる）</li>
+<p>※ 起動ログに <code>iPhone等から同じWi-Fiでアクセス: http://192.168.3.7:8765</code> と出ます。このIPはルーター環境で変わることがあるので、接続できないときはログのURLを確認してください。</p>
+<p>※ 最初に一度だけ、ファイアウォールの許可が必要です：</p>
+<p><code>D:\kakeibo_app\iPhoneアクセス設定(管理者で実行).bat</code> を <b>右クリック → 管理者として実行</b></p>
+<hr>
+<h2>2. iPhone単独版(PWA)の入れ方</h2>
+<li>iPhoneの <b>Safari</b> で https://k333hama.github.io/kakeibo/ を開く</li>
+<li>共有ボタン（□に↑のマーク）をタップ</li>
+<li><b>「ホーム画面に追加」</b> をタップ</li>
+<li>ホーム画面のアイコンから起動</li>
+<li>ホーム画面から起動すると全画面のアプリとして動きます</li>
+<li>電波がない場所でも使えます（データはiPhoneの中に保存）</li>
+<li>初期データ（今までの明細）が入った状態です</li>
+<hr>
+<h2>3. 共通の使い方</h2>
+<h3>支出を登録する</h3>
+<li>画面の <b>日付・金額・カテゴリー・店・メモ</b> を入力</li>
+<p>   - カテゴリー・店は入力欄に文字を入れると、<b>よく使う順</b>（件数の多い順）に候補が出ます</p>
+<li>メモの右横の <b>「登録」</b> ボタンをタップ/クリック</li>
+<li>下の「今月の明細」にすぐ追加されます</li>
+<h3>月を切り替える</h3>
+<li>上段の <b>◀ ▶ ボタン</b> で前月・翌月</li>
+<li>中央の <b>年月のプルダウン</b> で任意の年月へジャンプ</li>
+<h3>4つのカード</h3>
+<table><thead><tr><th>カード</th><th>意味</th></tr></thead><tbody><tr><td>支出合計</td><td>表示中の月の支出の合計</td></tr><tr><td>予算残高</td><td>設定の予算 − 今月の支出</td></tr><tr><td>前月比</td><td>前月と比べて増えた/減った金額</td></tr><tr><td>残高</td><td>収入 − 支出の累計</td></tr></tbody></table>
+<h3>グラフ</h3>
+<li><b>円グラフ</b>: 表示中の月の費目別内訳</li>
+<li><b>棒グラフ</b>: 月別支出推移。「過去6ヶ月」「過去1年」を切り替え可能</li>
+<h3>明細の修正・削除</h3>
+<li>明細の<b>行をクリック/タップ</b>すると編集窓が開きます</li>
+<li>金額・日付・カテゴリー・店・メモを直して <b>「保存」</b></li>
+<li>消したいときは <b>「削除」</b>（確認が出ます）</li>
+<h3>設定（⚙ボタン）</h3>
+<li><b>予算</b>の入力（例: 30000）→ 保存</li>
+<li><b>カテゴリー・店名の管理</b></li>
+<p>  - チップ（ボタン状の一覧）は<b>使った件数の多い順</b>に並び、件数バッジが付きます</p>
+<p>  - チップを押すと、そのカテゴリー/店の<b>全月の明細一覧</b>が出ます（行を押すと修正・削除）</p>
+<p>  - <b>✎</b> … 名前の変更（過去の明細もまとめて書き換わります）</p>
+<p>  - <b>✕</b> … 候補リストから削除（明細自体は残ります）</p>
+<p>  - 下の入力欄で<b>新しいカテゴリー・店名を追加</b>できます</p>
+<hr>
+<h2>4. PCとiPhoneのデータの同期</h2>
+<p>iPhoneで登録した支出をPCへ、またはその逆に移す方法です。</p>
+<li>移す側のアプリで <b>⚙設定 → JSONを書き出す</b> を押す（<code>kakeibo-backup-….json</code> がダウンロードされます）</li>
+<li>受け取る側のアプリで <b>⚙設定 → JSONを読み込み</b> からそのファイルを選ぶ</li>
+<li>読み込み側は<b>明細がファイルの内容に置き換わります</b>（マージではない）</li>
+<p>※ 置き換え前に、現在のデータを念のため書き出しておくと安全です。</p>
+<hr>
+<h2>5. 注意点</h2>
+<li><b>iPhone単独版のURLは一般公開されています</b>（URLを知る人は初期データを見られます）。削除・非公開にしたければ言ってください</li>
+<li>iPhone単独版のデータはiPhoneの中にだけあります。iPhoneを買い替える前に <b>JSONを書き出してバックアップ</b> してください</li>
+<li>PC版のデータは <code>D:\kakeibo_app\kakeibo.db</code> です。フォルダごとバックアップすると安心です</li>
+<li>Excel（<code>D:\家計簿\家計簿.xlsm</code>）からの再取り込みはアプリのボタンからは無効です（必要なら依頼してください）</li>
+<p><a href="./">← 家計簿アプリに戻る</a></p>
+</body></html>
