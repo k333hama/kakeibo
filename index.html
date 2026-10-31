@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家計簿</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e203e">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{
+  --bg:#eef2f8; --card:#ffffff; --ink:#1e2430; --muted:#68727f;
+  --accent:#2f6fed; --accent-ink:#fff; --line:#dde4ee;
+  --navy:rgb(14,32,62); --green:#1a9e5c; --red:#d64545; --amber:#b45309;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#e7ecf5 0%,#f3f6fb 40%,#eef2f8 100%);
+  color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  font-size:15px;-webkit-text-size-adjust:100%}
+.wrap{max-width:1060px;margin:0 auto;padding:16px 14px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--navy);color:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;
+  box-shadow:0 4px 14px rgba(14,32,62,.25)}
+header h1{font-size:19px;margin:0;letter-spacing:.05em}
+.monthnav{display:flex;align-items:center;gap:8px}
+.monthnav button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);
+  border-radius:9px;padding:7px 12px;font-size:15px;cursor:pointer}
+.monthnav select{background:#fff;color:var(--ink);border:none;border-radius:9px;padding:8px 10px;font-size:15px}
+#settingsBtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);
+  border-radius:9px;padding:7px 12px;font-size:14px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(30,40,60,.06)}
+.card h2{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.formrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted);font-weight:700}
+.field input{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:15px;
+  background:#fbfcfe;min-width:0}
+.f-date input{width:140px}.f-amount input{width:110px}
+.f-cat input,.f-store input{width:150px}.f-memo input{width:200px}
+#addBtn{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:10px 22px;
+  font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 8px rgba(14,32,62,.3)}
+#addBtn:active{transform:translateY(1px)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.stat{border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:var(--card);
+  box-shadow:0 2px 8px rgba(30,40,60,.06)}
+.stat .t{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.stat .val{font-size:26px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.stat.orange{background:linear-gradient(135deg,#fff7ed,#ffedd5);border-color:#fed7aa}
+.stat.orange .val{color:var(--amber)}
+.stat.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.stat.navy .t{color:#c7d2e4}
+.stat.navy .val{color:#fff}
+.stat.navy .sub{color:#c7d2e4}
+.charts{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
+@media(max-width:820px){.charts,.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}.charts{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .wrap{padding:10px 8px 30px}
+  .card{padding:12px 10px}
+  .formrow{gap:6px}
+  .field{flex:1 1 44%}
+  .f-date input,.f-amount input,.f-cat input,.f-store input{width:100%}
+  .f-memo{flex:1 1 100%}
+  #addBtn{flex:1 1 100%;padding:12px}
+  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{font-size:13px;min-width:520px}
+  th,td{padding:6px 6px}
+  .stat .val{font-size:22px}
+  .modal .box{padding:14px 12px}
+}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:none;background:#f4f7fc;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--accent);color:#fff;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;color:var(--muted);border-bottom:2px solid var(--line);padding:8px 8px}
+td{border-bottom:1px solid var(--line);padding:8px;font-size:14px}
+tr.expense td.amt{color:var(--red)}
+tr.income td.amt{color:var(--green)}
+td.amt{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:active{background:#eef4ff}
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700}
+.badge.expense{background:#fdecec;color:var(--red)}
+.badge.income{background:#e6f6ee;color:var(--green)}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.modal{position:fixed;inset:0;background:rgba(20,28,42,.55);display:none;align-items:center;
+  justify-content:center;z-index:50;padding:14px}
+.modal.open{display:flex}
+.modal .box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:640px;
+  max-height:92vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.modal h3{margin:0 0 14px;font-size:16px}
+.modal .row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.modal .row span{width:92px;font-size:13px;color:var(--muted);font-weight:700}
+.modal .row input,.modal .row select{flex:1;border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;font-size:15px;min-width:0}
+.mbtns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.mbtns button{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer}
+.b-save{background:var(--navy);color:#fff}
+.b-del{background:#fdecec;color:var(--red)}
+.b-close{background:#eef1f6;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #c9d4e4;
+  border-radius:8px;padding:5px 8px;font-size:13px;cursor:pointer}
+.chip .cnt{background:#eef3ff;color:var(--muted);border-radius:6px;padding:1px 6px;
+  font-size:11px;font-weight:700}
+.chip.sel .cnt{background:rgba(255,255,255,.25);color:#fff}
+.chip:hover{background:#eaf1fb;border-color:var(--accent)}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip button{border:none;background:none;cursor:pointer;font-size:13px;color:#98a1ad;padding:0 2px}
+.chip.sel button{color:#dfe8f5}
+.addline{display:flex;gap:8px;margin-top:10px}
+.addline input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+.addline button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;
+  font-size:13px;font-weight:700;cursor:pointer}
+#lookupBox{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+#lookupBox h4{margin:0 0 8px;font-size:14px}
+.filebtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+.filebtns button{background:#eef3ff;border:1px solid #c9d8f2;color:var(--accent);border-radius:9px;
+  padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+#fileInput{display:none}
+.pwa-hint{font-size:12px;color:var(--muted);background:#f4f8ff;border:1px solid #dbe6f7;
+  border-radius:10px;padding:10px 12px;margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🏠 家計簿</h1>
+  <div class="monthnav">
+    <button id="prevM" title="前月">◀</button>
+    <select id="monthSel"></select>
+    <button id="nextM" title="翌月">▶</button>
+    <button id="settingsBtn">⚙ 設定</button>
+  </div>
+</header>
+
+<div class="card">
+  <h2>支出を登録する</h2>
+  <div class="formrow">
+    <div class="field f-date"><label>日付</label><input type="date" id="fDate"></div>
+    <div class="field f-amount"><label>金額(円)</label><input type="number" id="fAmount" min="0" step="1" inputmode="numeric"></div>
+    <div class="field f-cat"><label>カテゴリー</label><input id="fCat" list="catList"></div>
+    <div class="field f-store"><label>店</label><input id="fStore" list="storeList"></div>
+    <div class="field f-memo"><label>メモ</label><input id="fMemo"></div>
+    <button id="addBtn">登録</button>
+  </div>
+  <datalist id="catList"></datalist>
+  <datalist id="storeList"></datalist>
+</div>
+
+<div class="stats">
+  <div class="stat orange"><div class="t">今月の支出</div><div class="val" id="stExpense">0円</div><div class="sub" id="stExpSub"></div></div>
+  <div class="stat orange"><div class="t">予算残高</div><div class="val" id="stBudget">0円</div><div class="sub" id="stBudSub"></div></div>
+  <div class="stat orange"><div class="t">前月比</div><div class="val" id="stDiff">0円</div><div class="sub" id="stDiffSub"></div></div>
+  <div class="stat navy"><div class="t">残高</div><div class="val" id="stBalance">0円</div><div class="sub">収入−支出（全期間）</div></div>
+</div>
+
+<div class="charts">
+  <div class="card">
+    <h2 id="pieTitle">費目別</h2>
+    <svg id="pie" viewBox="0 0 200 200" style="width:100%;max-width:260px;display:block;margin:0 auto"></svg>
+    <div class="legend" id="pieLegend"></div>
+  </div>
+  <div class="card">
+    <h2 style="display:flex;justify-content:space-between;align-items:center">
+      月別支出推移
+      <span class="seg"><button id="bar6" class="on">過去6ヶ月</button><button id="bar12">過去1年</button></span>
+    </h2>
+    <svg id="bar" viewBox="0 0 420 220" style="width:100%;display:block"></svg>
+  </div>
+</div>
+
+<div class="card">
+  <h2 id="detailTitle">明細</h2>
+  <p class="hint">💡 行をクリックすると「更新・削除」ができます</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>日付</th><th>種別</th><th>カテゴリー</th><th>店</th><th>メモ</th><th style="text-align:right">金額</th></tr></thead>
+    <tbody id="detailBody"></tbody>
+  </table>
+  </div>
+</div>
+</div>
+
+<div class="modal" id="editModal"><div class="box">
+  <h3>明細を更新・削除</h3>
+  <div class="row"><span>日付</span><input type="date" id="eDate"></div>
+  <div class="row"><span>種別</span><select id="eType"><option value="expense">支出</option><option value="income">収入</option></select></div>
+  <div class="row"><span>カテゴリー</span><input id="eCat" list="catList"></div>
+  <div class="row"><span>店</span><input id="eStore" list="storeList"></div>
+  <div class="row"><span>メモ</span><input id="eMemo"></div>
+  <div class="row"><span>金額(円)</span><input type="number" id="eAmount" min="0"></div>
+  <div class="mbtns">
+    <button class="b-save" id="eSave">保存</button>
+    <button class="b-del" id="eDelete">削除</button>
+    <button class="b-close" id="eClose">閉じる</button>
+  </div>
+</div></div>
+
+<div class="modal" id="settingsModal"><div class="box">
+  <h3>⚙ 設定</h3>
+  <div class="row"><span>月予算(円)</span><input type="number" id="sBudget" min="0"><button class="b-save" id="sBudgetSave" style="padding:8px 14px">保存</button></div>
+  <h4 style="margin:14px 0 0;font-size:14px">カテゴリー <span style="font-weight:400;color:var(--muted);font-size:12px">（押すと明細一覧・件数順）</span></h4>
+  <div class="chips" id="catChips"></div>
+  <div class="addline"><input id="newCat" placeholder="新しいカテゴリー名"><button id="addCat">追加</button></div>
+  <h4 style="margin:16px 0 0;font-size:14px">店名 <span style="font-weight:400;color:var(--muted);font-size:12px">（押すと明細一覧・件数順）</span></h4>
+  <div class="chips" id="storeChips"></div>
+  <div class="addline"><input id="newStore" placeholder="新しい店名"><button id="addStore">追加</button></div>
+  <div id="lookupBox" style="display:none">
+    <h4 id="lookupTitle"></h4>
+    <div class="tblwrap"><table>
+      <thead><tr><th>日付</th><th>種別</th><th>カテゴリー</th><th>店</th><th>メモ</th><th style="text-align:right">金額</th></tr></thead>
+      <tbody id="lookupBody"></tbody>
+    </table></div>
+  </div>
+  <div class="filebtns">
+    <button id="exportBtn">💾 データを書き出す(JSON)</button>
+    <button id="importBtn">📂 JSONを読み込む(置換)</button>
+    <input type="file" id="fileInput" accept=".json,application/json">
+  </div>
+  <div class="pwa-hint">📱 この画面を「ホーム画面に追加」すると、iPhone単独(オフラインでも)で使えます。データはこのiPhone内に保存されます。PCと同期したいときは「書き出し」→別の端末で「読み込み」してください。</div>
+  <div class="mbtns"><button class="b-close" id="sClose">閉じる</button></div>
+</div></div>
+
+<script>
+const SEED={"exported": "2026-10-31", "budget": 30000, "entries": [{"id": 53, "type": "expense", "date": "2026-07-16", "amount": 1720, "category": "医者", "store": "とよさと動物病院", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 49, "type": "income", "date": "2026-07-22", "amount": 53525, "category": "残高", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 50, "type": "expense", "date": "2026-07-25", "amount": 2178, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 51, "type": "expense", "date": "2026-07-28", "amount": 1856, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 52, "type": "expense", "date": "2026-07-28", "amount": 2033, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 54, "type": "income", "date": "2026-07-29", "amount": 10000, "category": "補充", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 55, "type": "expense", "date": "2026-07-29", "amount": 4180, "category": "ヘアカット", "store": "ＰＬＡＧＥ", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 56, "type": "income", "date": "2026-07-30", "amount": 1716, "category": "調整", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 58, "type": "expense", "date": "2026-08-02", "amount": 2144, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 57, "type": "expense", "date": "2026-08-03", "amount": 984, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 59, "type": "expense", "date": "2026-08-06", "amount": 520, "category": "リハビリ", "store": "たかしクリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 60, "type": "expense", "date": "2026-08-06", "amount": 720, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 61, "type": "expense", "date": "2026-08-07", "amount": 2344, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 62, "type": "expense", "date": "2026-08-10", "amount": 2620, "category": "医者", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 63, "type": "expense", "date": "2026-08-10", "amount": 4490, "category": "薬代", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 64, "type": "expense", "date": "2026-08-11", "amount": 1874, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 65, "type": "expense", "date": "2026-08-15", "amount": 4609, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 66, "type": "expense", "date": "2026-08-18", "amount": 700, "category": "医者", "store": "たかしクリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 67, "type": "expense", "date": "2026-08-18", "amount": 1020, "category": "薬代", "store": "たかしクリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 68, "type": "expense", "date": "2026-08-18", "amount": 870, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 69, "type": "expense", "date": "2026-08-19", "amount": 1720, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 70, "type": "expense", "date": "2026-08-23", "amount": 4323, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 71, "type": "income", "date": "2026-08-24", "amount": 170, "category": "調整", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 72, "type": "expense", "date": "2026-08-27", "amount": 520, "category": "リハビリ", "store": "たかしクリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 73, "type": "expense", "date": "2026-08-27", "amount": 890, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 74, "type": "expense", "date": "2026-08-29", "amount": 2083, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 75, "type": "income", "date": "2026-09-01", "amount": 20000, "category": "補充", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 76, "type": "expense", "date": "2026-09-01", "amount": 2076, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 77, "type": "expense", "date": "2026-09-02", "amount": 2350, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 78, "type": "expense", "date": "2026-09-04", "amount": 50, "category": "調整", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 79, "type": "expense", "date": "2026-09-06", "amount": 2033, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 80, "type": "income", "date": "2026-09-09", "amount": 24500, "category": "補充", "store": "", "memo": "ソフトバンクからの返金", "created_at": "2026-10-31 17:15:24"}, {"id": 81, "type": "expense", "date": "2026-09-11", "amount": 2048, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 82, "type": "expense", "date": "2026-09-11", "amount": 2956, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 83, "type": "expense", "date": "2026-09-13", "amount": 2000, "category": "喫茶店", "store": "らんぷ", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 84, "type": "expense", "date": "2026-09-14", "amount": 4200, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 85, "type": "expense", "date": "2026-09-16", "amount": 2620, "category": "医者", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 86, "type": "expense", "date": "2026-09-16", "amount": 3400, "category": "薬代", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 87, "type": "expense", "date": "2026-09-16", "amount": 1010, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 88, "type": "income", "date": "2026-09-20", "amount": 2000, "category": "補充", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 89, "type": "expense", "date": "2026-09-20", "amount": 1010, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 90, "type": "expense", "date": "2026-09-24", "amount": 1010, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 92, "type": "expense", "date": "2026-09-24", "amount": 6280, "category": "医者", "store": "ハッピークリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 91, "type": "expense", "date": "2026-09-25", "amount": 1682, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 93, "type": "expense", "date": "2026-09-28", "amount": 2000, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 94, "type": "income", "date": "2026-09-30", "amount": 520, "category": "補充", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 95, "type": "expense", "date": "2026-10-03", "amount": 4881, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 96, "type": "expense", "date": "2026-10-04", "amount": 2825, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 97, "type": "expense", "date": "2026-10-09", "amount": 2039, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 98, "type": "expense", "date": "2026-10-12", "amount": 1240, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 99, "type": "expense", "date": "2026-10-14", "amount": 2420, "category": "歯医者", "store": "いのまた歯科", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 100, "type": "expense", "date": "2026-10-15", "amount": 4955, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 101, "type": "expense", "date": "2026-10-19", "amount": 1990, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 102, "type": "expense", "date": "2026-10-27", "amount": 2620, "category": "医者", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 103, "type": "expense", "date": "2026-10-27", "amount": 3400, "category": "薬代", "store": "高野尾クリニック", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 104, "type": "income", "date": "2026-10-27", "amount": 20000, "category": "補充", "store": "", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 105, "type": "expense", "date": "2026-10-27", "amount": 1644, "category": "食費", "store": "一号館", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 106, "type": "expense", "date": "2026-10-27", "amount": 4990, "category": "食費", "store": "コスモス", "memo": "", "created_at": "2026-10-31 17:15:24"}, {"id": 107, "type": "expense", "date": "2026-10-28", "amount": 700, "category": "食費", "store": "マクドナルド", "memo": "", "created_at": "2026-10-31 17:15:24"}], "categories": [{"name": "食費", "kind": "expense"}, {"name": "医者", "kind": "expense"}, {"name": "薬代", "kind": "expense"}, {"name": "歯医者", "kind": "expense"}, {"name": "リハビリ", "kind": "expense"}, {"name": "交通費", "kind": "expense"}, {"name": "小遣い", "kind": "expense"}, {"name": "ペット", "kind": "expense"}, {"name": "美容室", "kind": "expense"}, {"name": "喫茶店", "kind": "expense"}, {"name": "その他", "kind": "expense"}, {"name": "補充", "kind": "income"}, {"name": "収入", "kind": "income"}, {"name": "調整", "kind": "income"}, {"name": "food", "kind": "expense"}, {"name": "被服費", "kind": "expense"}, {"name": "残高", "kind": "income"}, {"name": "ヘアカット", "kind": "expense"}, {"name": "テスト", "kind": "expense"}, {"name": "test", "kind": "expense"}], "stores": ["一号館", "コスモス", "サンシ", "マクドナルド", "たかしクリニック", "高野尾クリニック", "いのまた歯科", "ハッピークリニック", "春夏秋冬", "きのさき", "とよさと動物病院", "PLAGE", "らんぷ", "喫茶店", "teststore", "テストスーパー", "ＰＬＡＧＥ", "テスト店", "test"]};
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('ja-JP')+'円';
+let db, entries=[], cats=[], stores=[], budget=0, month='', trendN=6, lookup=null, editId=null;
+
+function idbOpen(){return new Promise((res,rej)=>{
+  const rq=indexedDB.open('kakeibo',1);
+  rq.onupgradeneeded=e=>{const d=e.target.result;
+    if(!d.objectStoreNames.contains('entries'))d.createObjectStore('entries',{keyPath:'id'});
+    if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'k'});};
+  rq.onsuccess=e=>res(e.target.result); rq.onerror=e=>rej(e.error);});}
+function idbGetAll(store){return new Promise((res,rej)=>{
+  const rq=db.transaction(store).objectStore(store).getAll();
+  rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);});}
+function idbPut(store,val){return new Promise((res,rej)=>{
+  const rq=db.transaction(store,'readwrite').objectStore(store).put(val);
+  rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error);});}
+function idbDel(store,key){return new Promise((res,rej)=>{
+  const rq=db.transaction(store,'readwrite').objectStore(store).delete(key);
+  rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error);});}
+async function saveMeta(){
+  await idbPut('meta',{k:'budget',v:budget});
+  await idbPut('meta',{k:'cats',v:cats});
+  await idbPut('meta',{k:'stores',v:stores});}
+
+async function load(){
+  db=await idbOpen();
+  entries=await idbGetAll('entries');
+  const meta=await idbGetAll('meta');
+  const m=Object.fromEntries(meta.map(r=>[r.k,r.v]));
+  if(m.budget!==undefined)budget=m.budget;
+  if(m.cats)cats=m.cats;
+  if(m.stores)stores=m.stores;
+  if(!entries.length&&SEED){
+    entries=SEED.entries.map(e=>({...e}));
+    cats=SEED.categories.map(c=>({...c}));
+    stores=SEED.stores.slice();
+    budget=SEED.budget;
+    for(const e of entries)await idbPut('entries',e);
+    await saveMeta();
+  }
+}
+
+// ===== 計算 =====
+const monthOf=e=>e.date.slice(0,7);
+function monthEntries(mo){return entries.filter(e=>monthOf(e)===mo).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id);}
+function balance(){return entries.reduce((s,e)=>s+(e.type==='income'?e.amount:-e.amount),0);}
+function catCounts(){const c={};for(const e of entries)c[e.category]=(c[e.category]||0)+1;return c;}
+function storeCounts(){const c={};for(const e of entries)c[e.store]=(c[e.store]||0)+1;return c;}
+function sortedCats(){const c=catCounts();return cats.map(x=>x.name).sort((a,b)=>(c[b]||0)-(c[a]||0)||a.localeCompare(b,'ja'));}
+function sortedStores(){const c=storeCounts();return stores.slice().sort((a,b)=>(c[b]||0)-(c[a]||0)||a.localeCompare(b,'ja'));}
+function allMonths(){const s=new Set(entries.map(monthOf));s.add(month);return [...s].sort().reverse();}
+function trendMonths(){const [y,mo]=month.split('-').map(Number);const out=[];for(let i=trendN-1;i>=0;i--){let m2=mo-i,y2=y;while(m2<1){m2+=12;y2--;}out.push(`${y2}-${String(m2).padStart(2,'0')}`);}return out;}
+
+// ===== 描画 =====
+function render(){
+  const me=monthEntries(month);
+  const exp=me.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  const inc=me.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+  $('stExpense').textContent=fmt(exp);
+  $('stExpSub').textContent=`収入 ${fmt(inc)} / ${me.length}件`;
+  const left=budget-exp;
+  $('stBudget').textContent=fmt(left);
+  $('stBudSub').textContent=left>=0?`予算 ${fmt(budget)} に対して残り`:`予算 ${fmt(budget)} を超過`;
+  const [y,mo]=month.split('-').map(Number);
+  const pm=mo===1?`${y-1}-12`:`${y}-${String(mo-1).padStart(2,'0')}`;
+  const pexp=monthEntries(pm).filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  const diff=exp-pexp;
+  $('stDiff').textContent=(diff>0?'+':'')+fmt(diff);
+  $('stDiffSub').textContent=`前月(${pm}) ${fmt(pexp)}`;
+  $('stBalance').textContent=fmt(balance());
+  renderPie(me); renderBar(); renderDetail(me); renderDatalists();
+  $('monthSel').innerHTML=allMonths().map(m=>`<option value="${m}"${m===month?' selected':''}>${m.replace('-','年')}月</option>`).join('');
+}
+const PALETTE=['#2f6fed','#d64545','#1a9e5c','#f0a11c','#8b5cf6','#0ea5b7','#e0679a','#7a8699','#b45309','#4a7bd8','#c0392b','#2e8b57'];
+function renderPie(me){
+  const by={};for(const e of me)if(e.type==='expense')by[e.category]=(by[e.category]||0)+e.amount;
+  const items=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+  const total=items.reduce((s,x)=>s+x[1],0);
+  const svg=$('pie');
+  if(!total){svg.innerHTML='<text x="100" y="105" text-anchor="middle" font-size="13" fill="#98a1ad">支出がありません</text>';$('pieLegend').innerHTML='';return;}
+  let a=-Math.PI/2,paths='';
+  items.forEach(([,v],i)=>{const a2=a+2*Math.PI*v/total;const large=a2-a>Math.PI?1:0;
+    const x1=100+80*Math.cos(a),y1=100+80*Math.sin(a),x2=100+80*Math.cos(a2),y2=100+80*Math.sin(a2);
+    paths+=`<path d="M100,100 L${x1},${y1} A80,80 0 ${large} 1 ${x2},${y2} Z" fill="${PALETTE[i%PALETTE.length]}" stroke="#fff" stroke-width="1.5"/>`;a=a2;});
+  svg.innerHTML=paths+'<circle cx="100" cy="100" r="45" fill="#fff"/><text x="100" y="97" text-anchor="middle" font-size="11" fill="#68727f">合計</text><text x="100" y="115" text-anchor="middle" font-size="13" font-weight="700" fill="#1e2430">'+total.toLocaleString()+'</text>';
+  $('pieLegend').innerHTML=items.map(([k,v],i)=>`<span><i style="background:${PALETTE[i%PALETTE.length]}"></i>${k} ${fmt(v)}</span>`).join('');
+}
+function renderBar(){
+  const ms=trendMonths();
+  const vals=ms.map(m=>monthEntries(m).filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0));
+  const max=Math.max(...vals,1);
+  const bw=420/ms.length;
+  let g='';
+  ms.forEach((m,i)=>{
+    const h=Math.round(vals[i]/max*160);
+    const x=i*bw+bw*0.2,w=bw*0.6,y=190-h;
+    g+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${m===month?'#2f6fed':'#9db8e8'}"/>`;
+    if(vals[i])g+=`<text x="${x+w/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="#68727f">${vals[i]>=10000?(vals[i]/1000).toFixed(0)+'k':vals[i]}</text>`;
+    const lab=m.slice(5)+'月'+(m.slice(5,7)==='01'?' '+m.slice(2,4):'');
+    g+=`<text x="${x+w/2}" y="207" text-anchor="middle" font-size="9" fill="#68727f">${lab}</text>`;});
+  g+='<line x1="0" y1="190" x2="420" y2="190" stroke="#dde4ee"/>';
+  $('bar').innerHTML=g;
+}
+function rowHtml(e){
+  return `<td>${e.date}</td><td><span class="badge ${e.type}">${e.type==='income'?'収入':'支出'}</span></td>`+
+    `<td>${e.category}</td><td>${e.store||''}</td><td>${e.memo||''}</td>`+
+    `<td class="amt">${(e.type==='income'?'+':'−')+e.amount.toLocaleString()}</td>`;}
+function renderDetail(me){
+  $('detailTitle').textContent=`${month.replace('-','年')}月の明細（${me.length}件）`;
+  $('detailBody').innerHTML=me.map(e=>`<tr class="${e.type}" data-id="${e.id}">${rowHtml(e)}</tr>`).join('');
+}
+function renderDatalists(){
+  $('catList').innerHTML=sortedCats().map(c=>`<option value="${c}">`).join('');
+  $('storeList').innerHTML=sortedStores().map(s=>`<option value="${s}">`).join('');
+}
+
+// ===== 登録 =====
+function ensureNames(cat,store){
+  if(cat&&!cats.some(c=>c.name===cat)){cats.push({name:cat,kind:'expense'});}
+  if(store&&!stores.includes(store))stores.push(store);}
+$('addBtn').onclick=async()=>{
+  const date=$('fDate').value, amount=parseInt($('fAmount').value||'0',10);
+  const cat=$('fCat').value.trim(), store=$('fStore').value.trim(), memo=$('fMemo').value.trim();
+  if(!date||!amount||!cat){alert('日付・金額・カテゴリーを入力してください');return;}
+  const id=Math.max(0,...entries.map(e=>e.id))+1;
+  const e={id,date,type:'expense',category:cat,store,memo,amount};
+  entries.push(e);ensureNames(cat,store);
+  await idbPut('entries',e);await saveMeta();
+  if(monthOf(e)!==month)month=monthOf(e);
+  $('fAmount').value='';$('fMemo').value='';
+  render();
+};
+
+// ===== 明細クリック→更新・削除 =====
+$('detailBody').addEventListener('click',ev=>{
+  const tr=ev.target.closest('tr[data-id]');if(!tr)return;openEdit(+tr.dataset.id);});
+function openEdit(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;editId=id;
+  $('eDate').value=e.date;$('eType').value=e.type;$('eCat').value=e.category;
+  $('eStore').value=e.store||'';$('eMemo').value=e.memo||'';$('eAmount').value=e.amount;
+  $('editModal').classList.add('open');}
+$('eClose').onclick=()=>$('editModal').classList.remove('open');
+$('eSave').onclick=async()=>{
+  const e=entries.find(x=>x.id===editId);if(!e)return;
+  e.date=$('eDate').value;e.type=$('eType').value;e.category=$('eCat').value.trim();
+  e.store=$('eStore').value.trim();e.memo=$('eMemo').value.trim();e.amount=parseInt($('eAmount').value||'0',10);
+  ensureNames(e.category,e.store);
+  await idbPut('entries',e);await saveMeta();
+  $('editModal').classList.remove('open');
+  if(lookup)renderLookup();
+  render();};
+$('eDelete').onclick=async()=>{
+  if(!confirm('この明細を削除しますか？'))return;
+  entries=entries.filter(x=>x.id!==editId);
+  await idbDel('entries',editId);
+  $('editModal').classList.remove('open');
+  if(lookup)renderLookup();
+  render();};
+
+// ===== 設定 =====
+$('settingsBtn').onclick=()=>{$('sBudget').value=budget;lookup=null;renderChips();$('lookupBox').style.display='none';$('settingsModal').classList.add('open');};
+$('sClose').onclick=()=>$('settingsModal').classList.remove('open');
+$('sBudgetSave').onclick=async()=>{budget=parseInt($('sBudget').value||'0',10);await saveMeta();render();alert('予算を保存しました');};
+function renderChips(){
+  const cc=catCounts(),sc=storeCounts();
+  const mk=(names,counts,kind,el)=>{el.innerHTML=names.map(n=>`
+    <span class="chip${lookup&&lookup.kind===kind&&lookup.name===n?' sel':''}" data-kind="${kind}" data-name="${n}">
+      ${n}<span class="cnt">${counts[n]||0}</span>
+      <button class="rn" title="名前を変更">✎</button>
+      <button class="rm" title="候補から削除">✕</button>
+    </span>`).join('');};
+  mk(sortedCats(),cc,'category',$('catChips'));
+  mk(sortedStores(),sc,'store',$('storeChips'));}
+async function renameName(kind,oldName){
+  const nn=prompt('新しい名前を入力:',oldName);if(!nn||nn===oldName)return;
+  if(kind==='category'){entries.forEach(e=>{if(e.category===oldName)e.category=nn;});
+    cats=cats.map(c=>c.name===oldName?{...c,name:nn}:c);
+    if(!cats.some(c=>c.name===nn))cats.push({name:nn,kind:'expense'});}
+  else{entries.forEach(e=>{if(e.store===oldName)e.store=nn;});
+    stores=stores.map(s=>s===oldName?nn:s);
+    if(!stores.includes(nn))stores.push(nn);}
+  await saveMeta();for(const e of entries)await idbPut('entries',e);
+  if(lookup&&lookup.kind===kind&&lookup.name===oldName)lookup.name=nn;
+  renderChips();if(lookup)renderLookup();renderDatalists();}
+async function removeName(kind,name){
+  if(!confirm(`候補から「${name}」を削除しますか？（明細は残ります）`))return;
+  if(kind==='category')cats=cats.filter(c=>c.name!==name);
+  else stores=stores.filter(s=>s!==name);
+  await saveMeta();renderChips();renderDatalists();}
+['catChips','storeChips'].forEach(id=>$(id).addEventListener('click',async ev=>{
+  const chip=ev.target.closest('.chip');if(!chip)return;
+  const kind=chip.dataset.kind,name=chip.dataset.name;
+  if(ev.target.classList.contains('rn')){await renameName(kind,name);return;}
+  if(ev.target.classList.contains('rm')){await removeName(kind,name);return;}
+  lookup={kind,name};renderChips();renderLookup();}));
+function renderLookup(){
+  if(!lookup){$('lookupBox').style.display='none';return;}
+  const list=entries.filter(e=>(lookup.kind==='category'?e.category:e.store)===lookup.name)
+    .sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.id-a.id);
+  $('lookupBox').style.display='';
+  $('lookupTitle').textContent=`「${lookup.name}」の明細（全期間 ${list.length}件）`;
+  $('lookupBody').innerHTML=list.map(e=>`<tr class="${e.type}" data-id="${e.id}">${rowHtml(e)}</tr>`).join('');}
+$('lookupBody').addEventListener('click',ev=>{
+  const tr=ev.target.closest('tr[data-id]');if(!tr)return;openEdit(+tr.dataset.id);});
+$('addCat').onclick=async()=>{const n=$('newCat').value.trim();if(!n)return;
+  if(!cats.some(c=>c.name===n))cats.push({name:n,kind:'expense'});
+  await saveMeta();$('newCat').value='';renderChips();renderDatalists();};
+$('addStore').onclick=async()=>{const n=$('newStore').value.trim();if(!n)return;
+  if(!stores.includes(n))stores.push(n);
+  await saveMeta();$('newStore').value='';renderChips();renderDatalists();};
+
+// ===== エクスポート / インポート =====
+$('exportBtn').onclick=()=>{
+  const data={exported:new Date().toISOString().slice(0,10),budget,entries,categories:cats,stores};
+  const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`kakeibo_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  URL.revokeObjectURL(a.href);};
+$('importBtn').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=async ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  if(!confirm('現在のデータを差し替えます。よろしいですか？'))return;
+  const data=JSON.parse(await f.text());
+  for(const e of entries)await idbDel('entries',e.id);
+  entries=(data.entries||[]).map(e=>({...e}));
+  cats=(data.categories||[]).map(c=>({...c}));
+  stores=data.stores||[];
+  if(data.budget!==undefined)budget=data.budget;
+  for(const e of entries)await idbPut('entries',e);
+  await saveMeta();
+  month=entries.length?entries.map(monthOf).sort().reverse()[0]:new Date().toISOString().slice(0,7);
+  $('settingsModal').classList.remove('open');
+  render();};
+
+// ===== 月ナビ =====
+$('prevM').onclick=()=>{const [y,m]=month.split('-').map(Number);month=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,'0')}`;render();};
+$('nextM').onclick=()=>{const [y,m]=month.split('-').map(Number);month=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`;render();};
+$('monthSel').onchange=()=>{month=$('monthSel').value;render();};
+$('bar6').onclick=()=>{trendN=6;$('bar6').classList.add('on');$('bar12').classList.remove('on');renderBar();};
+$('bar12').onclick=()=>{trendN=12;$('bar12').classList.add('on');$('bar6').classList.remove('on');renderBar();};
+
+// ===== service worker =====
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+// ===== 起動 =====
+(async()=>{
+  await load();
+  month=entries.length?entries.map(monthOf).sort().reverse()[0]:new Date().toISOString().slice(0,7);
+  $('fDate').value=new Date().toISOString().slice(0,10);
+  render();
+})();
+</script>
+</body>
+</html>
